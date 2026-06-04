@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LuaLearn v2 — Master Lua for Roblox</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+    :root {
+      --bg-0: #0a0e27;
+      --bg-1: #0f1429;
+      --bg-2: #151d3f;
+      --bg-3: #1a2454;
+      --bg-4: #22305c;
+      --border: #2e3d66;
+      --text-0: #e8ecf1;
+      --text-1: #a8b2c1;
+      --text-2: #6b7580;
+      --accent: #6366f1;
+      --accent-alt: #10b981;
+      --accent-warn: #f59e0b;
+      --accent-error: #ef4444;
+      --lua-keyword: #c084fc;
+      --lua-string: #86efac;
+      --lua-number: #fb923c;
+      --lua-func: #60a5fa;
+      --lua-builtin: #fbbf24;
+      --sidebar-w: 260px;
+      --header-h: 70px;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg-0);
+      color: var(--text-0);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    a { color: var(--accent); text-decoration: none; transition: color 0.2s; }
+    a:hover { color: var(--accent-alt); }
+    button { cursor: pointer; border: none; font-family: inherit; transition: all 0.2s; }
+    
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg-1); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    /* LAYOUT */
+    #app { display: flex; flex-direction: column; min-height: 100vh; }
+
+    #header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      height: var(--header-h);
+      background: rgba(10, 14, 39, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      gap: 20px;
+    }
+
+    #logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-0);
+      white-space: nowrap;
+    }
+
+    #logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-alt));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    #header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-1);
+    }
+
+    .header-stat .stat-value { color: var(--accent); }
+
+    #menu-btn {
+      display: none;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      color: var(--text-1);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 18px;
+    }
+
+    #body-wrap {
+      display: flex;
+      margin-top: var(--header-h);
+      min-height: calc(100vh - var(--header-h));
+    }
+
+    #sidebar {
+      position: fixed;
+      top: var(--header-h);
+      left: 0;
+      bottom: 0;
+      width: var(--sidebar-w);
+      background: var(--bg-1);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      z-index: 80;
+      transition: transform 0.3s ease;
+    }
+
+    #sidebar-inner { padding: 20px 0; }
+
+    .sidebar-section {
+      margin-bottom: 8px;
+    }
+
+    .sidebar-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-2);
+      padding: 12px 18px 8px;
+    }
+
+    .sidebar-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 10px 18px;
+      background: transparent;
+      color: var(--text-1);
+      text-align: left;
+      font-size: 14px;
+      border: none;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .sidebar-btn:hover { background: var(--bg-2); color: var(--text-0); }
+
+    .sidebar-btn.active {
+      border-left-color: var(--accent);
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--accent);
+    }
+
+    .sidebar-icon {
+      width: 24px;
+      height: 24px;
+      background: var(--bg-3);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-btn.active .sidebar-icon { background: var(--accent); color: white; }
+
+    #main {
+      flex: 1;
+      margin-left: var(--sidebar-w);
+      padding: 40px;
+      max-width: calc(100% - var(--sidebar-w));
+      transition: all 0.3s ease;
+    }
+
+    /* LESSON PAGES */
+    .lesson-page {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .lesson-page.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .lesson-header {
+      margin-bottom: 32px;
+    }
+
+    .lesson-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.25);
+      padding: 4px 12px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+
+    .lesson-title {
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--text-0);
+      margin-bottom: 12px;
+    }
+
+    .lesson-subtitle {
+      font-size: 16px;
+      color: var(--text-1);
+      max-width: 600px;
+    }
+
+    /* CONTENT SECTIONS */
+    .section { margin-bottom: 36px; }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-0);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 24px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    .text-box {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 18px;
+      line-height: 1.8;
+      color: var(--text-1);
+    }
+
+    .text-box p { margin-bottom: 12px; }
+    .text-box p:last-child { margin-bottom: 0; }
+    .text-box strong { color: var(--text-0); }
+    .text-box code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      background: var(--bg-3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--lua-builtin);
+    }
+
+    .info-box, .tip-box, .warn-box {
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 14px;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .info-box {
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      color: var(--text-1);
+    }
+
+    .tip-box {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      color: var(--text-1);
+    }
+
+    .warn-box {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: var(--text-1);
+    }
+
+    .box-icon { font-size: 18px; flex-shrink: 0; }
+    .box-text strong { color: var(--text-0); }
+
+    /* CODE EDITOR */
+    .code-block {
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .code-header {
+      background: var(--bg-4);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .code-filename {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--text-2);
+      font-weight: 600;
+    }
+
+    .code-content {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      padding: 16px;
+      overflow-x: auto;
+      color: var(--text-1);
+      line-height: 1.6;
+      white-space: pre;
+    }
+
+    .code-copy-btn {
+      background: var(--accent);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .code-copy-btn:hover { filter: brightness(1.1); }
+
+    .code-run-btn {
+      background: var(--accent-alt);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .code-run-btn:hover { filter: brightness(1.1); }
+
+    /* CHALLENGE */
+    .challenge {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .challenge-header {
+      background: var(--bg-3);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .challenge-header:hover { background: var(--bg-4); }
+
+    .challenge-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .challenge-icon { font-size: 20px; }
+
+    .challenge-title {
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--text-0);
+    }
+
+    .challenge-diff {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-left: auto;
+    }
+
+    .diff-easy {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-alt);
+    }
+
+    .diff-medium {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-warn);
+    }
+
+    .diff-hard {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--accent-error);
+    }
+
+    .challenge-chevron {
+      color: var(--text-2);
+      transition: transform 0.2s;
+      font-size: 16px;
+    }
+
+    .challenge.open .challenge-chevron { transform: rotate(180deg); }
+
+    .challenge-body {
+      display: none;
+      padding: 18px;
+      border-top: 1px solid var(--border);
+      color: var(--text-1);
+      line-height: 1.7;
+    }
+
+    .challenge.open .challenge-body { display: block; }
+
+    .challenge-prompt {
+      margin-bottom: 16px;
+      color: var(--text-1);
+    }
+
+    .challenge-prompt code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      background: var(--bg-3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--lua-builtin);
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .option {
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text-1);
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .option:hover:not(.disabled) {
+      border-color: var(--accent);
+      background: var(--bg-4);
+      color: var(--text-0);
+    }
+
+    .option.correct {
+      border-color: var(--accent-alt);
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--accent-alt);
+    }
+
+    .option.wrong {
+      border-color: var(--accent-error);
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--accent-error);
+    }
+
+    .option.disabled { cursor: default; }
+
+    .option-letter {
+      width: 20px;
+      height: 20px;
+      background: var(--bg-4);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .challenge-btn {
+      background: var(--accent);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .challenge-btn:hover { filter: brightness(1.1); }
+
+    .feedback {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .feedback.show { display: block; }
+    .feedback.correct { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: var(--accent-alt); }
+    .feedback.wrong { background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: var(--accent-error); }
+
+    /* NAV */
+    .lesson-nav {
+      display: flex;
+      gap: 12px;
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      color: var(--text-1);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .nav-btn:hover { background: var(--bg-3); color: var(--text-0); }
+
+    .nav-btn.next { margin-left: auto; background: var(--accent); color: white; border-color: var(--accent); }
+    .nav-btn.next:hover { filter: brightness(1.1); }
+
+    /* WELCOME PAGE */
+    .welcome-hero {
+      background: linear-gradient(135deg, var(--bg-2) 0%, var(--bg-3) 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 48px;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    .welcome-hero h1 {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 16px;
+      color: var(--text-0);
+    }
+
+    .welcome-hero h1 .accent { color: var(--accent); }
+
+    .welcome-hero p {
+      font-size: 16px;
+      color: var(--text-1);
+      max-width: 600px;
+      margin: 0 auto 24px;
+    }
+
+    .start-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: white;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .start-btn:hover { transform: translateY(-2px); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .grid-item {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+    }
+
+    .grid-item-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      color: white;
+      border-radius: 50%;
+      font-weight: 700;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .grid-item h4 { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .grid-item p { font-size: 12px; color: var(--text-2); }
+
+    /* TABLE */
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .table th {
+      background: var(--bg-3);
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-1);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-1);
+    }
+
+    .table tr:last-child td { border-bottom: none; }
+
+    /* SYNTAX */
+    .tok-keyword { color: var(--lua-keyword); font-weight: 600; }
+    .tok-string { color: var(--lua-string); }
+    .tok-number { color: var(--lua-number); }
+    .tok-func { color: var(--lua-func); }
+    .tok-builtin { color: var(--lua-builtin); }
+
+    /* MOBILE */
+    @media (max-width: 768px) {
+      #sidebar { transform: translateX(-100%); }
+      #main { margin-left: 0; max-width: 100%; padding: 20px 16px; }
+      #menu-btn { display: block; }
+      #sidebar.open { transform: translateX(0); }
+      #sidebar-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 70;
+      }
+      #sidebar-overlay { display: none; }
+      #sidebar-overlay.show { display: block; }
+      .lesson-title { font-size: 28px; }
+      .welcome-hero { padding: 24px; }
+      .welcome-hero h1 { font-size: 32px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- HEADER -->
+    <header id="header">
+      <div id="logo">
+        <div id="logo-icon">📚</div>
+        <span>LuaLearn</span>
+      </div>
+      <div id="header-right">
+        <div class="header-stat">
+          📊 <span class="stat-value" id="progress-display">0</span>%
+        </div>
+        <div class="header-stat">
+          ⭐ <span class="stat-value" id="score-display">0</span> pts
+        </div>
+        <button id="menu-btn" onclick="toggleSidebar()">☰</button>
+      </div>
+    </header>
+
+    <div id="body-wrap">
+      <!-- SIDEBAR -->
+      <nav id="sidebar">
+        <div id="sidebar-inner">
+          <div class="sidebar-section">
+            <div class="sidebar-label">Start Here</div>
+            <button class="sidebar-btn active" data-lesson="welcome" onclick="switchLesson('welcome', this)">
+              <span class="sidebar-icon">🏠</span>
+              Welcome
+            </button>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="sidebar-label">Lua Basics</div>
+            <button class="sidebar-btn" data-lesson="l01" onclick="switchLesson('l01', this)">
+              <span class="sidebar-icon">1</span>
+              Variables & Types
+            </button>
+            <button class="sidebar-btn" data-lesson="l02" onclick="switchLesson('l02', this)">
+              <span class="sidebar-icon">2</span>
+              Operators
+            </button>
+            <button class="sidebar-btn" data-lesson="l03" onclick="switchLesson('l03', this)">
+              <span class="sidebar-icon">3</span>
+              Conditionals
+            </button>
+            <button class="sidebar-btn" data-lesson="l04" onclick="switchLesson('l04', this)">
+              <span class="sidebar-icon">4</span>
+              Loops
+            </button>
+            <button class="sidebar-btn" data-lesson="l05" onclick="switchLesson('l05', this)">
+              <span class="sidebar-icon">5</span>
+              Functions
+            </button>
+            <button class="sidebar-btn" data-lesson="l06" onclick="switchLesson('l06', this)">
+              <span class="sidebar-icon">6</span>
+              Tables
+            </button>
+          </div>
+
+          <div class="sidebar-section">
+            <div class="sidebar-label">Roblox</div>
+            <button class="sidebar-btn" data-lesson="l07" onclick="switchLesson('l07', this)">
+              <span class="sidebar-icon">7</span>
+              Roblox Env
+            </button>
+            <button class="sidebar-btn" data-lesson="l08" onclick="switchLesson('l08', this)">
+              <span class="sidebar-icon">8</span>
+              Services
+            </button>
+            <button class="sidebar-btn" data-lesson="l09" onclick="switchLesson('l09', this)">
+              <span class="sidebar-icon">9</span>
+              Remote Events
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <!-- MAIN CONTENT -->
+      <main id="main">
+        <!-- WELCOME -->
+        <section id="page-welcome" class="lesson-page active">
+          <div class="lesson-header">
+            <h1 style="font-size: 48px; font-weight: 800; line-height: 1.2; margin-bottom: 16px;">
+              Master <span style="color: var(--accent);">Lua</span> for Roblox
+            </h1>
+            <p style="font-size: 16px; color: var(--text-1); max-width: 600px;">
+              Learn Lua scripting from scratch and master Roblox game development. Interactive lessons, real code examples, and hands-on challenges.
+            </p>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">What You'll Learn</h2>
+            <div class="grid">
+              <div class="grid-item">
+                <div class="grid-item-num">1</div>
+                <h4>Fundamentals</h4>
+                <p>Variables, types, operators</p>
+              </div>
+              <div class="grid-item">
+                <div class="grid-item-num">2</div>
+                <h4>Control Flow</h4>
+                <p>if/else, loops, functions</p>
+              </div>
+              <div class="grid-item">
+                <div class="grid-item-num">3</div>
+                <h4>Data Structures</h4>
+                <p>Tables, arrays, dictionaries</p>
+              </div>
+              <div class="grid-item">
+                <div class="grid-item-num">4</div>
+                <h4>Roblox APIs</h4>
+                <p>Services, events, remotes</p>
+              </div>
+              <div class="grid-item">
+                <div class="grid-item-num">5</div>
+                <h4>Best Practices</h4>
+                <p>Clean code, debugging tips</p>
+              </div>
+              <div class="grid-item">
+                <div class="grid-item-num">6</div>
+                <h4>Real Projects</h4>
+                <p>Game dev examples</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="tip-box">
+            <div class="box-icon">💡</div>
+            <div class="box-text">
+              <strong>Pro Tip:</strong> Type along with the code examples. You'll learn faster by doing!
+            </div>
+          </div>
+
+          <button class="start-btn" onclick="switchLesson('l01', document.querySelector('[data-lesson=l01]'))">
+            Start Learning →
+          </button>
+        </section>
+
+        <!-- LESSON 1: VARIABLES -->
+        <section id="page-l01" class="lesson-page">
+          <div class="lesson-header">
+            <div class="lesson-tag">Lesson 1 · Fundamentals</div>
+            <div class="lesson-title">Variables & Data Types</div>
+            <div class="lesson-subtitle">Store and manipulate information in your scripts.</div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">What is a Variable?</h2>
+            <div class="text-box">
+              <p>A <strong>variable</strong> is a named container that stores a value. Think of it like a labeled box where you can put data and retrieve it later by name.</p>
+              <p>In Lua, creating a variable is simple:</p>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-filename">example.lua</span>
+                <button class="code-copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-content"><span class="tok-keyword">local</span> name = <span class="tok-string">"Alex"</span>
+<span class="tok-keyword">local</span> age = <span class="tok-number">18</span>
+<span class="tok-keyword">local</span> isPlayer = <span class="tok-keyword">true</span>
+
+<span class="tok-builtin">print</span>(name)  <span class="tok-comment">-- Output: Alex</span></div>
+            </div>
+
+            <div class="info-box">
+              <div class="box-icon">ℹ️</div>
+              <div class="box-text">
+                Always use <code>local</code> for variables. It prevents bugs by keeping variables scoped to their block of code.
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Lua Data Types</h2>
+            <div class="text-box">
+              <p>Lua has 8 main data types. Here are the most common ones:</p>
+            </div>
+
+            <table class="table">
+              <tr>
+                <th>Type</th>
+                <th>Example</th>
+                <th>Description</th>
+              </tr>
+              <tr>
+                <td><code>number</code></td>
+                <td><code>42</code>, <code>3.14</code></td>
+                <td>Integers and decimals</td>
+              </tr>
+              <tr>
+                <td><code>string</code></td>
+                <td><code>"hello"</code>, <code>'world'</code></td>
+                <td>Text data</td>
+              </tr>
+              <tr>
+                <td><code>boolean</code></td>
+                <td><code>true</code>, <code>false</code></td>
+                <td>True or false values</td>
+              </tr>
+              <tr>
+                <td><code>table</code></td>
+                <td><code>{1, 2, 3}</code></td>
+                <td>Arrays and dictionaries</td>
+              </tr>
+              <tr>
+                <td><code>nil</code></td>
+                <td><code>nil</code></td>
+                <td>Empty/no value</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Challenge: Variable Types</h2>
+            <div class="challenge">
+              <div class="challenge-header" onclick="toggleChallenge(this)">
+                <div class="challenge-title-wrap">
+                  <span class="challenge-icon">🎯</span>
+                  <span class="challenge-title">Guess the Type</span>
+                  <span class="challenge-diff diff-easy">Easy</span>
+                </div>
+                <span class="challenge-chevron">▼</span>
+              </div>
+              <div class="challenge-body">
+                <div class="challenge-prompt">
+                  What is the data type of <code>x = "123"</code>?
+                </div>
+                <div class="options">
+                  <div class="option" onclick="checkAnswer(this, 'wrong')">
+                    <span class="option-letter">A</span>
+                    number
+                  </div>
+                  <div class="option" onclick="checkAnswer(this, 'correct')">
+                    <span class="option-letter">B</span>
+                    string
+                  </div>
+                  <div class="option" onclick="checkAnswer(this, 'wrong')">
+                    <span class="option-letter">C</span>
+                    boolean
+                  </div>
+                </div>
+                <div class="feedback"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nav-btn" onclick="alert('No previous lesson')">← Previous</button>
+            <button class="nav-btn next" onclick="switchLesson('l02', document.querySelector('[data-lesson=l02]'))">Next →</button>
+          </div>
+        </section>
+
+        <!-- LESSON 2: OPERATORS -->
+        <section id="page-l02" class="lesson-page">
+          <div class="lesson-header">
+            <div class="lesson-tag">Lesson 2 · Fundamentals</div>
+            <div class="lesson-title">Operators</div>
+            <div class="lesson-subtitle">Perform calculations and comparisons with operators.</div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Arithmetic Operators</h2>
+            <div class="text-box">
+              <p>Use arithmetic operators to perform math operations:</p>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-filename">math.lua</span>
+                <button class="code-copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-content"><span class="tok-keyword">local</span> a = <span class="tok-number">10</span>
+<span class="tok-keyword">local</span> b = <span class="tok-number">3</span>
+
+<span class="tok-builtin">print</span>(a + b)  <span class="tok-comment">-- 13</span>
+<span class="tok-builtin">print</span>(a - b)  <span class="tok-comment">-- 7</span>
+<span class="tok-builtin">print</span>(a * b)  <span class="tok-comment">-- 30</span>
+<span class="tok-builtin">print</span>(a / b)  <span class="tok-comment">-- 3.333...</span>
+<span class="tok-builtin">print</span>(a ^ <span class="tok-number">2</span>) <span class="tok-comment">-- 100 (power)</span>
+<span class="tok-builtin">print</span>(a % b)  <span class="tok-comment">-- 1 (modulo)</span></div>
+            </div>
+
+            <table class="table">
+              <tr>
+                <th>Operator</th>
+                <th>Name</th>
+                <th>Example</th>
+              </tr>
+              <tr>
+                <td><code>+</code></td>
+                <td>Addition</td>
+                <td><code>5 + 3 = 8</code></td>
+              </tr>
+              <tr>
+                <td><code>-</code></td>
+                <td>Subtraction</td>
+                <td><code>5 - 3 = 2</code></td>
+              </tr>
+              <tr>
+                <td><code>*</code></td>
+                <td>Multiplication</td>
+                <td><code>5 * 3 = 15</code></td>
+              </tr>
+              <tr>
+                <td><code>/</code></td>
+                <td>Division</td>
+                <td><code>6 / 2 = 3</code></td>
+              </tr>
+              <tr>
+                <td><code>^</code></td>
+                <td>Power</td>
+                <td><code>2 ^ 3 = 8</code></td>
+              </tr>
+              <tr>
+                <td><code>%</code></td>
+                <td>Modulo (remainder)</td>
+                <td><code>7 % 3 = 1</code></td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Comparison Operators</h2>
+            <div class="text-box">
+              <p>Compare values to get <code>true</code> or <code>false</code>:</p>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-filename">compare.lua</span>
+                <button class="code-copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-content"><span class="tok-keyword">local</span> x = <span class="tok-number">10</span>
+
+<span class="tok-builtin">print</span>(x > <span class="tok-number">5</span>)   <span class="tok-comment">-- true</span>
+<span class="tok-builtin">print</span>(x < <span class="tok-number">5</span>)   <span class="tok-comment">-- false</span>
+<span class="tok-builtin">print</span>(x == <span class="tok-number">10</span>)  <span class="tok-comment">-- true (equal)</span>
+<span class="tok-builtin">print</span>(x ~= <span class="tok-number">5</span>)  <span class="tok-comment">-- true (not equal)</span>
+<span class="tok-builtin">print</span>(x >= <span class="tok-number">10</span>) <span class="tok-comment">-- true</span>
+<span class="tok-builtin">print</span>(x <= <span class="tok-number">10</span>) <span class="tok-comment">-- true</span></div>
+            </div>
+
+            <div class="warn-box">
+              <div class="box-icon">⚠️</div>
+              <div class="box-text">
+                <strong>Important:</strong> Use <code>==</code> to compare values, not <code>=</code> (which assigns).
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Challenge: Operators</h2>
+            <div class="challenge">
+              <div class="challenge-header" onclick="toggleChallenge(this)">
+                <div class="challenge-title-wrap">
+                  <span class="challenge-icon">🎯</span>
+                  <span class="challenge-title">What's the Result?</span>
+                  <span class="challenge-diff diff-easy">Easy</span>
+                </div>
+                <span class="challenge-chevron">▼</span>
+              </div>
+              <div class="challenge-body">
+                <div class="challenge-prompt">
+                  What does <code>15 % 4</code> equal?
+                </div>
+                <div class="options">
+                  <div class="option" onclick="checkAnswer(this, 'wrong')">
+                    <span class="option-letter">A</span>
+                    3
+                  </div>
+                  <div class="option" onclick="checkAnswer(this, 'correct')">
+                    <span class="option-letter">B</span>
+                    3 (remainder)
+                  </div>
+                  <div class="option" onclick="checkAnswer(this, 'wrong')">
+                    <span class="option-letter">C</span>
+                    15
+                  </div>
+                </div>
+                <div class="feedback"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nav-btn" onclick="switchLesson('l01', document.querySelector('[data-lesson=l01]'))">← Previous</button>
+            <button class="nav-btn next" onclick="switchLesson('l03', document.querySelector('[data-lesson=l03]'))">Next →</button>
+          </div>
+        </section>
+
+        <!-- LESSON 3: CONDITIONALS -->
+        <section id="page-l03" class="lesson-page">
+          <div class="lesson-header">
+            <div class="lesson-tag">Lesson 3 · Fundamentals</div>
+            <div class="lesson-title">Conditionals (if/else)</div>
+            <div class="lesson-subtitle">Make decisions in your code with if statements.</div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">If Statements</h2>
+            <div class="text-box">
+              <p>Use <code>if</code> to run code only when a condition is true:</p>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-filename">conditional.lua</span>
+                <button class="code-copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-content"><span class="tok-keyword">local</span> age = <span class="tok-number">16</span>
+
+<span class="tok-keyword">if</span> age >= <span class="tok-number">18</span> <span class="tok-keyword">then</span>
+  <span class="tok-builtin">print</span>(<span class="tok-string">"You are an adult"</span>)
+<span class="tok-keyword">end</span>
+
+<span class="tok-keyword">if</span> age < <span class="tok-number">13</span> <span class="tok-keyword">then</span>
+  <span class="tok-builtin">print</span>(<span class="tok-string">"You are a kid"</span>)
+<span class="tok-keyword">elseif</span> age < <span class="tok-number">18</span> <span class="tok-keyword">then</span>
+  <span class="tok-builtin">print</span>(<span class="tok-string">"You are a teen"</span>)  <span class="tok-comment">-- This runs</span>
+<span class="tok-keyword">else</span>
+  <span class="tok-builtin">print</span>(<span class="tok-string">"You are an adult"</span>)
+<span class="tok-keyword">end</span></div>
+            </div>
+
+            <div class="tip-box">
+              <div class="box-icon">💡</div>
+              <div class="box-text">
+                <strong>Pro Tip:</strong> You can chain multiple <code>elseif</code> conditions together for more complex logic.
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Logical Operators</h2>
+            <div class="text-box">
+              <p>Combine conditions using <code>and</code>, <code>or</code>, and <code>not</code>:</p>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-filename">logic.lua</span>
+                <button class="code-copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-content"><span class="tok-keyword">local</span> age = <span class="tok-number">25</span>
+<span class="tok-keyword">local</span> hasLicense = <span class="tok-keyword">true</span>
+
+<span class="tok-keyword">if</span> age >= <span class="tok-number">18</span> <span class="tok-keyword">and</span> hasLicense <span class="tok-keyword">then</span>
+  <span class="tok-builtin">print</span>(<span class="tok-string">"You can drive!"</span>)
+<span class="tok-keyword">end</span>
+
+<span class="tok-keyword">if</span> age < <span class="tok-number">18</span> <span class="tok-keyword">or</span> <span class="tok-keyword">not</span> hasLicense <span class="tok-keyword">then</span>
+  <span class="tok-builtin">print</span>(<span class="tok-string">"You cannot drive"</span>)
+<span class="tok-keyword">end</span></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Challenge: Conditionals</h2>
+            <div class="challenge">
+              <div class="challenge-header" onclick="toggleChallenge(this)">
+                <div class="challenge-title-wrap">
+                  <span class="challenge-icon">🎯</span>
+                  <span class="challenge-title">Read the Code</span>
+                  <span class="challenge-diff diff-easy">Easy</span>
+                </div>
+                <span class="challenge-chevron">▼</span>
+              </div>
+              <div class="challenge-body">
+                <div class="challenge-prompt">
+                  What will this code print?<br><br>
+                  <code>local x = 10<br>
+                  if x > 5 and x < 15 then<br>
+                  &nbsp;&nbsp;print("yes")<br>
+                  end</code>
+                </div>
+                <div class="options">
+                  <div class="option" onclick="checkAnswer(this, 'correct')">
+                    <span class="option-letter">A</span>
+                    yes
+                  </div>
+                  <div class="option" onclick="checkAnswer(this, 'wrong')">
+                    <span class="option-letter">B</span>
+                    no
+                  </div>
+                  <div class="option" onclick="checkAnswer(this, 'wrong')">
+                    <span class="option-letter">C</span>
+                    Nothing (error)
+                  </div>
+                </div>
+                <div class="feedback"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nav-btn" onclick="switchLesson('l02', document.querySelector('[data-lesson=l02]'))">← Previous</button>
+            <button class="nav-btn next" onclick="switchLesson('l04', document.querySelector('[data-lesson=l04]'))">Next →</button>
+          </div>
+        </section>
+
+        <!-- LESSON 4: LOOPS -->
+        <section id="page-l04" class="lesson-page">
+          <div class="lesson-header">
+            <div class="lesson-tag">Lesson 4 · Fundamentals</div>
+            <div class="lesson-title">Loops</div>
+            <div class="lesson-subtitle">Repeat code multiple times with loops.</div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">For Loops</h2>
+            <div class="text-box">
+              <p>The <code>for</code> loop runs code a specific number of times:</p>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-filename">for_loop.lua</span>
+                <button class="code-copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-content"><span class="tok-comment">-- Count from 1 to 5</span>
+<span class="tok-keyword">for</span> i = <span class="tok-number">1</span>, <span class="tok-number">5</span> <span class="tok-keyword">do</span>
+  <span class="tok-builtin">print</span>(i)  <span class="tok-comment">-- Prints 1, 2, 3, 4, 5</span>
+<span class="tok-keyword">end</span>
+
+<span class="tok-comment">-- Count by 2s</span>
+<span class="tok-keyword">for</span> i = <span class="tok-number">0</span>, <span class="tok-number">10</span>, <span class="tok-number">2</span> <span class="tok-keyword">do</span>
+  <span class="tok-builtin">print</span>(i)  <span class="tok-comment">-- Prints 0, 2, 4, 6, 8, 10</span>
+<span class="tok-keyword">end</span></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">While Loops</h2>
+            <div class="text-box">
+              <p>The <code>while</code> loop runs while a condition is true:</p>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-filename">while_loop.lua</span>
+                <button class="code-copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-content"><span class="tok-keyword">local</span> count = <span class="tok-number">1</span>
+
+<span class="tok-keyword">while</span> count <= <span class="tok-number">5</span> <span class="tok-keyword">do</span>
+  <span class="tok-builtin">print</span>(count)
+  count = count + <span class="tok-number">1</span>  <span class="tok-comment">-- Don't forget to increment!</span>
+<span class="tok-keyword">end</span></div>
+            </div>
+
+            <div class="warn-box">
+              <div class="box-icon">⚠️</div>
+              <div class="box-text">
+                <strong>Warning:</strong> Make sure your while loop condition eventually becomes false, or it will loop forever!
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Challenge: Loops</h2>
+            <div class="challenge">
+              <div class="challenge-header" onclick="toggleChallenge(this)">
+                <div class="challenge-title-wrap">
+                  <span class="challenge-icon">🎯</span>
+                  <span class="challenge-title">Loop Output</span>
+                  <span class="challenge-diff diff-medium">Medium</span>
+                </div>
+                <span class="challenge-chevron">▼</span>
+              </div>
+              <div class="challenge-body">
+                <div class="challenge-prompt">
+                  How many times does this code run?<br><br>
+                  <code>for i = 1, 10, 2 do<br>
+                  &nbsp;&nbsp;print(i)<br>
+                  end</code>
+                </div>
+                <div class="options">
+                  <div class="option" onclick="checkAnswer(this, 'wrong')">
+                    <span class="option-letter">A</span>
+                    10 times
+                  </div>
+                  <div class="option" onclick="checkAnswer(this, 'correct')">
+                    <span class="option-letter">B</span>
+                    5 times
+                  </div>
+                  <div class="option" onclick="checkAnswer(this, 'wrong')">
+                    <span class="option-letter">C</span>
+                    2 times
+                  </div>
+                </div>
+                <div class="feedback"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nav-btn" onclick="switchLesson('l03', document.querySelector('[data-lesson=l03]'))">← Previous</button>
+            <button class="nav-btn next" onclick="switchLesson('l05', document.querySelector('[data-lesson=l05]'))">Next →</button>
+          </div>
+        </section>
+
+        <!-- LESSON 5: FUNCTIONS -->
+        <section id="page-l05" class="lesson-page">
+          <div class="lesson-header">
+            <div class="lesson-tag">Lesson 5 · Fundamentals</div>
+            <div class="lesson-title">Functions</div>
+            <div class="lesson-subtitle">Create reusable blocks of code.</div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Defining Functions</h2>
+            <div class="text-box">
+              <p>A function is a reusable block of code. Define it once, call it many times:</p>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-filename">functions.lua</span>
+                <button class="code-copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-content"><span class="tok-keyword">local</span> <span class="tok-keyword">function</span> <span class="tok-func">greet</span>(name)
+  <span class="tok-builtin">print</span>(<span class="tok-string">"Hello, "</span> .. name)
+<span class="tok-keyword">end</span>
+
+<span class="tok-func">greet</span>(<span class="tok-string">"Alice"</span>)  <span class="tok-comment">-- Output: Hello, Alice</span>
+<span class="tok-func">greet</span>(<span class="tok-string">"Bob"</span>)    <span class="tok-comment">-- Output: Hello, Bob</span></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Return Values</h2>
+            <div class="text-box">
+              <p>Functions can return values for you to use:</p>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-filename">return.lua</span>
+                <button class="code-copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-content"><span class="tok-keyword">local</span> <span class="tok-keyword">function</span> <span class="tok-func">add</span>(a, b)
+  <span class="tok-keyword">return</span> a + b
+<span class="tok-keyword">end</span>
+
+<span class="tok-keyword">local</span> result = <span class="tok-func">add</span>(<span class="tok-number">5</span>, <span class="tok-number">3</span>)
+<span class="tok-builtin">print</span>(result)  <span class="tok-comment">-- Output: 8</span></div>
+            </div>
+
+            <div class="tip-box">
+              <div class="box-icon">💡</div>
+              <div class="box-text">
+                <strong>Pro Tip:</strong> Functions can return multiple values separated by commas: <code>return x, y, z</code>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Challenge: Functions</h2>
+            <div class="challenge">
+              <div class="challenge-header" onclick="toggleChallenge(this)">
+                <div class="challenge-title-wrap">
+                  <span class="challenge-icon">🎯</span>
+                  <span class="challenge-title">Function Call</span>
+                  <span class="challenge-diff diff-easy">Easy</span>
+                </div>
+                <span class="challenge-chevron">▼</span>
+              </div>
+              <div class="challenge-body">
+                <div class="challenge-prompt">
+                  What does this output?<br><br>
+                  <code>local function multiply(x, y)<br>
+                  &nbsp;&nbsp;return x * y<br>
+                  end<br><br>
+                  print(multiply(4, 5))</code>
+                </div>
+                <div class="options">
+                  <div class="option" onclick="checkAnswer(this, 'wrong')">
+                    <span class="option-letter">A</span>
+                    9
+                  </div>
+                  <div class="option" onclick="checkAnswer(this, 'correct')">
+                    <span class="option-letter">B</span>
+                    20
+                  </div>
+                  <div class="option" onclick="checkAnswer(this, 'wrong')">
+                    <span class="option-letter">C</span>
+                    45
+                  </div>
+                </div>
+                <div class="feedback"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nav-btn" onclick="switchLesson('l04', document.querySelector('[data-lesson=l04]'))">← Previous</button>
+            <button class="nav-btn next" onclick="switchLesson('l06', document.querySelector('[data-lesson=l06]'))">Next →</button>
+          </div>
+        </section>
+
+        <!-- LESSON 6: TABLES -->
+        <section id="page-l06" class="lesson-page">
+          <div class="lesson-header">
+            <div class="lesson-tag">Lesson 6 · Fundamentals</div>
+            <div class="lesson-title">Tables</div>
+            <div class="lesson-subtitle">Work with arrays and dictionaries.</div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Tables as Arrays</h2>
+            <div class="text-box">
+              <p>Tables are collections that can store multiple values. Use <code>{}</code> to create them:</p>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-filename">arrays.lua</span>
+                <button class="code-copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-content"><span class="tok-keyword">local</span> fruits = {<span class="tok-string">"apple"</span>, <span class="tok-string">"banana"</span>, <span class="tok-string">"orange"</span>}
+
+<span class="tok-builtin">print</span>(fruits[<span class="tok-number">1</span>])  <span class="tok-comment">-- apple (note: 1-indexed!)</span>
+<span class="tok-builtin">print</span>(fruits[<span class="tok-number">2</span>])  <span class="tok-comment">-- banana</span>
+<span class="tok-builtin">print</span>(#fruits)    <span class="tok-comment">-- 3 (length)</span>
+
+<span class="tok-comment">-- Add a new item</span>
+<span class="tok-builtin">table.insert</span>(fruits, <span class="tok-string">"grape"</span>)</div>
+            </div>
+
+            <div class="warn-box">
+              <div class="box-icon">⚠️</div>
+              <div class="box-text">
+                <strong>Important:</strong> Lua tables are 1-indexed (start at 1), not 0-indexed like many languages!
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Tables as Dictionaries</h2>
+            <div class="text-box">
+              <p>Use tables like dictionaries with key-value pairs:</p>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-filename">dict.lua</span>
+                <button class="code-copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-content"><span class="tok-keyword">local</span> player = {
+  name = <span class="tok-string">"Alex"</span>,
+  level = <span class="tok-number">5</span>,
+  health = <span class="tok-number">100</span>
+}
+
+<span class="tok-builtin">print</span>(player.name)    <span class="tok-comment">-- Alex</span>
+<span class="tok-builtin">print</span>(player[<span class="tok-string">"level"</span>]) <span class="tok-comment">-- 5</span>
+
+player.health = <span class="tok-number">75</span>  <span class="tok-comment">-- Update value</span></div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Challenge: Tables</h2>
+            <div class="challenge">
+              <div class="challenge-header" onclick="toggleChallenge(this)">
+                <div class="challenge-title-wrap">
+                  <span class="challenge-icon">🎯</span>
+                  <span class="challenge-title">Table Access</span>
+                  <span class="challenge-diff diff-easy">Easy</span>
+                </div>
+                <span class="challenge-chevron">▼</span>
+              </div>
+              <div class="challenge-body">
+                <div class="challenge-prompt">
+                  What does this output?<br><br>
+                  <code>local nums = {10, 20, 30}<br>
+                  print(nums[2])</code>
+                </div>
+                <div class="options">
+                  <div class="option" onclick="checkAnswer(this, 'wrong')">
+                    <span class="option-letter">A</span>
+                    10
+                  </div>
+                  <div class="option" onclick="checkAnswer(this, 'correct')">
+                    <span class="option-letter">B</span>
+                    20
+                  </div>
+                  <div class="option" onclick="checkAnswer(this, 'wrong')">
+                    <span class="option-letter">C</span>
+                    30
+                  </div>
+                </div>
+                <div class="feedback"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nav-btn" onclick="switchLesson('l05', document.querySelector('[data-lesson=l05]'))">← Previous</button>
+            <button class="nav-btn next" onclick="switchLesson('l07', document.querySelector('[data-lesson=l07]'))">Next →</button>
+          </div>
+        </section>
+
+        <!-- LESSON 7: ROBLOX ENVIRONMENT -->
+        <section id="page-l07" class="lesson-page">
+          <div class="lesson-header">
+            <div class="lesson-tag">Lesson 7 · Roblox</div>
+            <div class="lesson-title">Roblox Environment</div>
+            <div class="lesson-subtitle">Understand how Roblox Lua works.</div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Global Variables</h2>
+            <div class="text-box">
+              <p>Roblox provides global variables you can access from anywhere:</p>
+            </div>
+
+            <table class="table">
+              <tr>
+                <th>Variable</th>
+                <th>Description</th>
+                <th>Example</th>
+              </tr>
+              <tr>
+                <td><code>game</code></td>
+                <td>Root of Roblox instance tree</td>
+                <td><code>game.Workspace</code></td>
+              </tr>
+              <tr>
+                <td><code>workspace</code></td>
+                <td>The 3D world</td>
+                <td><code>workspace.Part</code></td>
+              </tr>
+              <tr>
+                <td><code>script</code></td>
+                <td>The current script object</td>
+                <td><code>script.Parent</code></td>
+              </tr>
+              <tr>
+                <td><code>_G</code></td>
+                <td>Global table (cross-script)</td>
+                <td><code>_G.myValue = 5</code></td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Services</h2>
+            <div class="text-box">
+              <p>Access Roblox services using <code>game:GetService()</code>:</p>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-filename">services.lua</span>
+                <button class="code-copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-content"><span class="tok-keyword">local</span> Players = game:<span class="tok-func">GetService</span>(<span class="tok-string">"Players"</span>)
+<span class="tok-keyword">local</span> RunService = game:<span class="tok-func">GetService</span>(<span class="tok-string">"RunService"</span>)
+
+<span class="tok-comment">-- Common services:</span>
+<span class="tok-comment">-- Players, Workspace, Debris, UserInputService</span>
+<span class="tok-comment">-- RunService, TweenService, etc.</span></div>
+            </div>
+
+            <div class="tip-box">
+              <div class="box-icon">💡</div>
+              <div class="box-text">
+                <strong>Pro Tip:</strong> Always use <code>:GetService()</code> instead of accessing services directly. It's more reliable!
+              </div>
+            </div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nav-btn" onclick="switchLesson('l06', document.querySelector('[data-lesson=l06]'))">← Previous</button>
+            <button class="nav-btn next" onclick="switchLesson('l08', document.querySelector('[data-lesson=l08]'))">Next →</button>
+          </div>
+        </section>
+
+        <!-- LESSON 8: SERVICES -->
+        <section id="page-l08" class="lesson-page">
+          <div class="lesson-header">
+            <div class="lesson-tag">Lesson 8 · Roblox</div>
+            <div class="lesson-title">Working with Services</div>
+            <div class="lesson-subtitle">Interact with Roblox APIs using services.</div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Getting Players</h2>
+            <div class="text-box">
+              <p>The Players service manages all connected players:</p>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-filename">players.lua</span>
+                <button class="code-copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-content"><span class="tok-keyword">local</span> Players = game:<span class="tok-func">GetService</span>(<span class="tok-string">"Players"</span>)
+
+<span class="tok-comment">-- When a player joins</span>
+Players.PlayerAdded:<span class="tok-func">Connect</span>(<span class="tok-keyword">function</span>(player)
+  <span class="tok-builtin">print</span>(player.Name .. <span class="tok-string">" joined!"</span>)
+<span class="tok-keyword">end</span>)
+
+<span class="tok-comment">-- When a player leaves</span>
+Players.PlayerRemoving:<span class="tok-func">Connect</span>(<span class="tok-keyword">function</span>(player)
+  <span class="tok-builtin">print</span>(player.Name .. <span class="tok-string">" left!"</span>)
+<span class="tok-keyword">end</span>)</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Signals & Events</h2>
+            <div class="text-box">
+              <p>Roblox events trigger when something happens. Use <code>:Connect()</code> to listen:</p>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-filename">events.lua</span>
+                <button class="code-copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-content"><span class="tok-keyword">local</span> part = workspace.Part
+
+<span class="tok-comment">-- When a part is touched</span>
+part.Touched:<span class="tok-func">Connect</span>(<span class="tok-keyword">function</span>(hit)
+  <span class="tok-builtin">print</span>(hit.Name .. <span class="tok-string">" touched the part"</span>)
+<span class="tok-keyword">end</span>)
+
+<span class="tok-comment">-- When a part changes parent</span>
+part.AncestryChanged:<span class="tok-func">Connect</span>(<span class="tok-keyword">function</span>()
+  <span class="tok-builtin">print</span>(<span class="tok-string">"Part moved!"</span>)
+<span class="tok-keyword">end</span>)</div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Challenge: Services</h2>
+            <div class="challenge">
+              <div class="challenge-header" onclick="toggleChallenge(this)">
+                <div class="challenge-title-wrap">
+                  <span class="challenge-icon">🎯</span>
+                  <span class="challenge-title">Code Prediction</span>
+                  <span class="challenge-diff diff-medium">Medium</span>
+                </div>
+                <span class="challenge-chevron">▼</span>
+              </div>
+              <div class="challenge-body">
+                <div class="challenge-prompt">
+                  Which is the correct way to get the Players service?
+                </div>
+                <div class="options">
+                  <div class="option" onclick="checkAnswer(this, 'wrong')">
+                    <span class="option-letter">A</span>
+                    game.Players
+                  </div>
+                  <div class="option" onclick="checkAnswer(this, 'correct')">
+                    <span class="option-letter">B</span>
+                    game:GetService("Players")
+                  </div>
+                  <div class="option" onclick="checkAnswer(this, 'wrong')">
+                    <span class="option-letter">C</span>
+                    Players:GetService(game)
+                  </div>
+                </div>
+                <div class="feedback"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nav-btn" onclick="switchLesson('l07', document.querySelector('[data-lesson=l07]'))">← Previous</button>
+            <button class="nav-btn next" onclick="switchLesson('l09', document.querySelector('[data-lesson=l09]'))">Next →</button>
+          </div>
+        </section>
+
+        <!-- LESSON 9: REMOTE EVENTS -->
+        <section id="page-l09" class="lesson-page">
+          <div class="lesson-header">
+            <div class="lesson-tag">Lesson 9 · Roblox</div>
+            <div class="lesson-title">Remote Events</div>
+            <div class="lesson-subtitle">Communicate between client and server.</div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">What are Remote Events?</h2>
+            <div class="text-box">
+              <p>Remote Events let the client (LocalScript) and server (Script) communicate with each other. This is essential for multiplayer games!</p>
+            </div>
+
+            <div class="info-box">
+              <div class="box-icon">ℹ️</div>
+              <div class="box-text">
+                <strong>Client:</strong> LocalScript (runs on player's computer)<br>
+                <strong>Server:</strong> Script (runs on Roblox servers)
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <h2 class="section-title">Firing Events</h2>
+            <div class="text-box">
+              <p>Send messages from client to server:</p>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-filename">LocalScript (Client)</span>
+                <button class="code-copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-content"><span class="tok-keyword">local</span> event = game.ReplicatedStorage:WaitForChild(<span class="tok-string">"MyEvent"</span>)
+
+<span class="tok-comment">-- Send data to server</span>
+event:<span class="tok-func">FireServer</span>(<span class="tok-string">"Hello server!"</span>, <span class="tok-number">42</span>)</div>
+            </div>
+
+            <div class="code-block">
+              <div class="code-header">
+                <span class="code-filename">Script (Server)</span>
+                <button class="code-copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+              <div class="code-content"><span class="tok-keyword">local</span> event = Instance.new(<span class="tok-string">"RemoteEvent"</span>)
+event.Name = <span class="tok-string">"MyEvent"</span>
+event.Parent = game.ReplicatedStorage
+
+<span class="tok-comment">-- Listen for client data</span>
+event.OnServerEvent:<span class="tok-func">Connect</span>(<span class="tok-keyword">function</span>(player, message, number)
+  <span class="tok-builtin">print</span>(player.Name .. <span class="tok-string">": "</span> .. message)
+<span class="tok-keyword">end</span>)</div>
+            </div>
+
+            <div class="warn-box">
+              <div class="box-icon">⚠️</div>
+              <div class="box-text">
+                <strong>Security:</strong> Never trust client input! Always validate data on the server before using it.
+              </div>
+            </div>
+          </div>
+
+          <div class="lesson-nav">
+            <button class="nav-btn" onclick="switchLesson('l08', document.querySelector('[data-lesson=l08]'))">← Previous</button>
+            <button class="nav-btn next" onclick="alert('Congratulations! You completed the course!')">Finish →</button>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <script>
+    let currentLesson = 'welcome';
+    let score = 0;
+    let completedLessons = new Set();
+
+    function switchLesson(lessonId, element) {
+      // Hide all pages
+      document.querySelectorAll('.lesson-page').forEach(page => {
+        page.classList.remove('active');
+      });
+
+      // Show selected page
+      const page = document.getElementById('page-' + lessonId);
+      if (page) {
+        page.classList.add('active');
+      }
+
+      // Update sidebar
+      document.querySelectorAll('.sidebar-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      if (element) {
+        element.classList.add('active');
+      }
+
+      currentLesson = lessonId;
+      closeSidebar();
+      window.scrollTo(0, 0);
+
+      // Update progress
+      completedLessons.add(lessonId);
+      updateProgress();
+    }
+
+    function toggleChallenge(header) {
+      const challenge = header.closest('.challenge');
+      challenge.classList.toggle('open');
+    }
+
+    function checkAnswer(option, type) {
+      const challenge = option.closest('.challenge');
+      const feedback = challenge.querySelector('.feedback');
+      const allOptions = challenge.querySelectorAll('.option');
+
+      // Disable all options
+      allOptions.forEach(opt => opt.classList.add('disabled'));
+
+      // Show result
+      if (type === 'correct') {
+        option.classList.add('correct');
+        feedback.classList.add('show', 'correct');
+        feedback.textContent = '✓ Correct! Well done!';
+        score += 10;
+        updateScore();
+      } else {
+        option.classList.add('wrong');
+        feedback.classList.add('show', 'wrong');
+        feedback.textContent = '✗ Not quite. Try the next question!';
+      }
+    }
+
+    function copyCode(btn) {
+      const code = btn.closest('.code-block').querySelector('.code-content');
+      const text = code.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const original = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => {
+          btn.textContent = original;
+        }, 2000);
+      });
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebar-overlay');
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('show');
+    }
+
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('open');
+      document.getElementById('sidebar-overlay').classList.remove('show');
+    }
+
+    function updateScore() {
+      document.getElementById('score-display').textContent = score;
+    }
+
+    function updateProgress() {
+      const total = 9; // 9 lessons
+      const completed = completedLessons.size;
+      const percentage = Math.round((completed / total) * 100);
+      document.getElementById('progress-display').textContent = percentage;
+    }
+
+    // Mobile sidebar overlay click
+    document.getElementById('sidebar-overlay').addEventListener('click', closeSidebar);
+
+    // Initialize
+    updateScore();
+    updateProgress();
+  </script>
+</body>
+</html>
